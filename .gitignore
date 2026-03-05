@@ -1,0 +1,3 @@
+node_modules/
+ratings.db
+process.env

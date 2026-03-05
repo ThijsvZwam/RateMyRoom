@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RateMyRoom 🔥</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --card: #1e1e1e;
+      --border: #2a2a2a;
+      --accent: #ff4d00;
+      --accent2: #ffb347;
+      --text: #f0ece4;
+      --muted: #888;
+      --green: #39e07a;
+      --red: #ff4d4d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 1rem 4rem;
+      background-image: radial-gradient(ellipse 80% 50% at 50% -10%, #ff4d0022 0%, transparent 70%);
+    }
+    /* AD BANNER */
+    .ad-banner {
+      width: 100%;
+      max-width: 600px;
+      margin: 0.75rem auto;
+      background: linear-gradient(135deg, #1a1a1a, #222);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem 1rem;
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .ad-banner strong { color: var(--accent2); }
+    .ad-slot {
+      width: 100%;
+      max-width: 600px;
+      margin: 0.5rem auto 1rem;
+      background: #1a1a1a;
+      border: 1px dashed #333;
+      border-radius: 12px;
+      height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #444;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+    }
+    /* HEADER */
+    header {
+      text-align: center;
+      padding: 2.5rem 1rem 1.5rem;
+      width: 100%;
+      max-width: 600px;
+    }
+    header h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3.5rem, 12vw, 6rem);
+      letter-spacing: 0.04em;
+      line-height: 1;
+      background: linear-gradient(135deg, #ff4d00, #ffb347 60%, #fff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-top: 0.4rem;
+    }
+    /* NAV */
+    nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    nav a {
+      padding: 0.45rem 1.1rem;
+      border-radius: 999px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    nav a:hover, nav a.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    /* MAIN CARD */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.8rem;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 8px 40px #0008;
+    }
+    /* UPLOAD ZONE */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 14px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+    .upload-zone:hover { border-color: var(--accent); background: #ff4d0008; }
+    .upload-zone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .upload-zone .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .upload-zone p { color: var(--muted); font-size: 0.9rem; }
+    .upload-zone p span { color: var(--accent); font-weight: 600; }
+    #preview {
+      width: 100%; max-height: 280px; object-fit: contain;
+      border-radius: 12px; margin-top: 1rem; display: none;
+    }
+    /* NICKNAME ROW */
+    .nick-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.2rem;
+      align-items: center;
+    }
+    .nick-row input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem 1rem;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .nick-row input:focus { border-color: var(--accent); }
+    .nick-row input::placeholder { color: #555; }
+    /* BUTTONS */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+      padding: 0.7rem 1.6rem; border-radius: 12px; font-weight: 700;
+      font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+      cursor: pointer; border: none; transition: all 0.2s; width: 100%;
+    }
+    .btn-primary { background: var(--accent); color: #fff; margin-top: 1.2rem; }
+    .btn-primary:hover { background: #ff6a2a; transform: translateY(-1px); box-shadow: 0 4px 20px #ff4d0055; }
+    .btn-primary:disabled { background: #444; color: #777; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-green { background: #1a3d28; color: var(--green); border: 1px solid #39e07a44; margin-top: 0.8rem; }
+    .btn-green:hover { background: #204830; }
+    /* RESULT */
+    #result { margin-top: 1.6rem; display: none; }
+    .score-display {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 5rem;
+      text-align: center;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .score-label { text-align: center; color: var(--muted); font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1rem; }
+    .verdict-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 0.75rem;
+    }
+    .verdict-block .label {
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--muted); margin-bottom: 0.3rem;
+    }
+    .verdict-block.roast .label { color: var(--red); }
+    .verdict-block.tip .label { color: var(--green); }
+    .verdict-block p { font-size: 0.95rem; line-height: 1.55; }
+    /* LOADING STATE */
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.2s steps(4, end) infinite;
+    }
+    @keyframes dots {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
+    }
+    /* LEADERBOARD */
+    .lb-header {
+      display: flex; justify-content: space-between; align-items: center;
+      width: 100%; max-width: 600px; margin: 2rem 0 0.75rem;
+    }
+    .lb-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 0.05em; }
+    .lb-header button { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; transition: color 0.2s; }
+    .lb-header button:hover { color: var(--text); }
+    #leaderboard { list-style: none; width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 0.5rem; }
+    .lb-entry {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 0.85rem 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .lb-entry:hover { border-color: var(--accent); background: #1f1a17; transform: translateX(3px); }
+    .lb-entry::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--accent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .lb-entry:hover::before { opacity: 1; }
+    .lb-rank { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--muted); min-width: 2rem; }
+    .lb-rank.gold { color: #ffd700; }
+    .lb-rank.silver { color: #c0c0c0; }
+    .lb-rank.bronze { color: #cd7f32; }
+    .lb-thumb {
+      width: 46px; height: 46px; border-radius: 8px; object-fit: cover;
+      background: var(--surface); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; color: #444; font-size: 1.2rem;
+    }
+    .lb-thumb img { width: 100%; height: 100%; border-radius: 8px; object-fit: cover; }
+    .lb-info { flex: 1; min-width: 0; }
+    .lb-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lb-snippet { font-size: 0.78rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lb-score-badge {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      white-space: nowrap;
+    }
+    /* PAGINATION */
+    .pagination {
+      display: flex; gap: 0.5rem; margin-top: 1rem; width: 100%; max-width: 600px; justify-content: center;
+    }
+    .pagination button {
+      background: var(--card); border: 1px solid var(--border); color: var(--text);
+      padding: 0.45rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .pagination button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
+    /* MODAL */
+    #modal-overlay {
+      position: fixed; inset: 0; background: #000b;
+      display: none; align-items: center; justify-content: center;
+      z-index: 100; padding: 1rem;
+      backdrop-filter: blur(6px);
+      animation: fadeIn 0.2s ease;
+    }
+    #modal-overlay.open { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.8rem;
+      width: 100%; max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-close {
+      position: absolute; top: 1rem; right: 1rem;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); border-radius: 50%; width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1rem; transition: all 0.2s;
+    }
+    .modal-close:hover { color: var(--text); border-color: var(--text); }
+    .modal img { width: 100%; border-radius: 12px; object-fit: contain; max-height: 260px; background: var(--surface); }
+    .modal-nick { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; margin-top: 1rem; }
+    .modal-score-big {
+      font-family: 'Bebas Neue', sans-serif; font-size: 4rem; line-height: 1;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    /* PRO BANNER */
+    .pro-banner {
+      width: 100%; max-width: 600px;
+      margin: 1.5rem auto 0;
+      background: linear-gradient(135deg, #1a1500, #2a2000);
+      border: 1px solid #ffb34755;
+      border-radius: 16px;
+      padding: 1rem 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .pro-banner p { font-size: 0.88rem; color: var(--accent2); line-height: 1.4; }
+    .pro-banner strong { display: block; font-size: 1rem; color: #fff; margin-bottom: 0.2rem; }
+    .btn-pro {
+      background: linear-gradient(135deg, #ffb347, #ff8c00);
+      color: #000; font-weight: 800; padding: 0.5rem 1.2rem;
+      border-radius: 10px; border: none; cursor: pointer; white-space: nowrap;
+      font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .btn-pro:hover { transform: scale(1.04); box-shadow: 0 4px 20px #ffb34755; }
+    /* TOAST */
+    #toast {
+      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--card); border: 1px solid var(--border);
+      padding: 0.7rem 1.4rem; border-radius: 12px; font-size: 0.9rem;
+      transition: transform 0.3s ease; z-index: 200;
+      pointer-events: none;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    /* FLAG */
+    .flag-btn {
+      font-size: 0.75rem; color: #555; background: none; border: none;
+      cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 6px;
+      transition: color 0.2s;
+    }
+    .flag-btn:hover { color: var(--red); }
+  </style>
+</head>
+<body>
+
+  <!-- AD SLOT TOP (replace with real AdSense code) -->
+  <div class="ad-slot">[ Advertisement — 728×90 ]</div>
+
+  <header>
+    <h1>RateMyRoom</h1>
+    <p>Drop your room. Get roasted by AI. Climb the board.</p>
+  </header>
+
+  <nav>
+    <a href="index.html" class="active">🏠 Rate</a>
+    <a href="./Leaderboard/lb.html">🏆 Leaderboard</a>
+  </nav>
+
+  <div class="card">
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" accept="image/*" id="imageInput" />
+      <div class="icon">📸</div>
+      <p><span>Click to upload</span> or drag & drop</p>
+      <p style="font-size:0.78rem; margin-top:0.3rem;">JPG, PNG, WEBP — max 10MB</p>
+    </div>
+    <img id="preview" alt="Preview" />
+
+    <div class="nick-row">
+      <input type="text" id="nicknameInput" placeholder="Your nickname (e.g. ChaosCouch)" maxlength="24" />
+    </div>
+
+    <button id="rateBtn" class="btn btn-primary" disabled>
+      ⚡ Rate My Room
+    </button>
+
+    <div id="result">
+      <div class="score-display" id="score">—</div>
+      <div class="score-label">out of 10</div>
+      <div class="verdict-block roast">
+        <div class="label">🔥 The Roast</div>
+        <p id="roast">...</p>
+      </div>
+      <div class="verdict-block tip">
+        <div class="label">💡 Top Tip</div>
+        <p id="tip">...</p>
+      </div>
+      <button id="submitScoreBtn" class="btn btn-green">Submit to Leaderboard 🏆</button>
+    </div>
+  </div>
+
+  <!-- PRO / MONETIZATION BANNER -->
+  <div class="pro-banner">
+    <p>
+      <strong>✨ RateMyRoom Pro</strong>
+      Get a full 10-point breakdown, style tag, redesign suggestions & priority rating
+    </p>
+    <button class="btn-pro" onclick="showToast('Coming soon — join the waitlist!')">Go Pro $2.99</button>
+  </div>
+
+  <!-- AD SLOT MID -->
+  <div class="ad-slot" style="margin-top: 1.5rem;">[ Advertisement — 300×250 ]</div>
+
+  <div class="lb-header">
+    <h2>🏆 Top Rooms</h2>
+    <button id="refreshLeaderboard" title="Refresh">🔄</button>
+  </div>
+  <ul id="leaderboard"><li style="color: var(--muted); padding: 1rem; text-align:center;">Loading leaderboard...</li></ul>
+  <div class="pagination">
+    <button id="prevBtn" disabled>← Prev</button>
+    <button id="nextBtn">Next →</button>
+  </div>
+
+  <!-- AD SLOT BOTTOM -->
+  <div class="ad-slot" style="margin-top: 1.5rem;">[ Advertisement — 728×90 ]</div>
+
+  <!-- MODAL -->
+  <div id="modal-overlay">
+    <div class="modal">
+      <button class="modal-close" id="modalClose">✕</button>
+      <img id="modalImg" src="" alt="Room" />
+      <div style="display:flex; align-items:baseline; gap:0.8rem; flex-wrap:wrap; margin-top:1rem;">
+        <div class="modal-nick" id="modalNick">—</div>
+        <div class="modal-score-big" id="modalScore">—</div>
+        <span style="color:var(--muted); font-size:0.8rem;">/10</span>
+      </div>
+      <div class="verdict-block roast" style="margin-top:0.8rem;">
+        <div class="label">🔥 Roast</div>
+        <p id="modalRoast">—</p>
+      </div>
+      <div class="verdict-block tip" style="margin-top:0.5rem;">
+        <div class="label">💡 Tip</div>
+        <p id="modalTip">—</p>
+      </div>
+      <div style="margin-top:0.8rem; display:flex; justify-content:flex-end;">
+        <button class="flag-btn" id="flagBtn">🚩 Report image</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast">👋 Message here</div>
+
+  <script>
+    const SERVER = "http://localhost:3000";
+    let currentScore = null, currentRoast = "", currentTip = "", currentImage = null;
+    let lbData = [], lbPage = 0;
+    const PAGE_SIZE = 5;
+
+    // ── TOAST ──────────────────────────────────────────────
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2800);
+    }
+
+    // ── IMAGE UPLOAD ───────────────────────────────────────
+    const imageInput = document.getElementById("imageInput");
+    const preview = document.getElementById("preview");
+    const rateBtn = document.getElementById("rateBtn");
+
+    imageInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        currentImage = ev.target.result; // base64
+        preview.src = currentImage;
+        preview.style.display = "block";
+        rateBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // ── AI RATING ──────────────────────────────────────────
+    rateBtn.addEventListener("click", async () => {
+      if (!currentImage) return;
+      rateBtn.disabled = true;
+      rateBtn.innerHTML = '<span class="loading-dots">Analyzing your room</span>';
+
+      const base64Data = currentImage.split(",")[1];
+      const mediaType = currentImage.split(";")[0].split(":")[1];
+
+      try {
+        const response = await fetch(`${SERVER}/rate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageBase64: base64Data, mediaType })
+        });
+
+        const parsed = await response.json();
+        if (parsed.error) throw new Error(parsed.error);
+
+        // Parse Claude's raw score
+        let rawScore = parseFloat(parsed.score);
+        if (isNaN(rawScore)) rawScore = 5.0;
+        rawScore = Math.max(0, Math.min(10, rawScore));
+
+        // Ease-in-circ curve: f(x) = 1 - sqrt(1 - (x/10)^2), mapped back to 0–10
+        // This compresses scores downward — a "7" from Claude becomes ~2.86, a "9" becomes ~5.64
+        // making high scores feel genuinely earned
+        const t = rawScore / 10;
+        const curved = (1 - Math.sqrt(1 - t * t)) * 10;
+
+        // Trim to 3–5 decimal places (no more, no less)
+        const decimals = 3 + Math.floor(Math.random() * 3); // 3, 4, or 5
+        const displayScore = curved.toFixed(decimals);
+
+        currentScore = parseFloat(displayScore);
+        currentRoast = parsed.roast;
+        currentTip = parsed.tip;
+
+        document.getElementById("score").textContent = displayScore;
+        document.getElementById("roast").textContent = parsed.roast;
+        document.getElementById("tip").textContent = parsed.tip;
+        document.getElementById("result").style.display = "block";
+        document.getElementById("submitScoreBtn").style.display = "flex";
+      } catch (err) {
+        console.error(err);
+        showToast("❌ Rating failed — check the console");
+      } finally {
+        rateBtn.disabled = false;
+        rateBtn.innerHTML = "⚡ Rate My Room";
+      }
+    });
+
+    // ── SUBMIT ─────────────────────────────────────────────
+    document.getElementById("submitScoreBtn").addEventListener("click", async () => {
+      const nickname = document.getElementById("nicknameInput").value.trim() || generateNick();
+
+      try {
+        const res = await fetch(`${SERVER}/submit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            score: currentScore,
+            roast: currentRoast,
+            tip: currentTip,
+            nickname,
+            image: currentImage,  // base64 — store on server or omit if too heavy
+            timestamp: Date.now()
+          })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        document.getElementById("submitScoreBtn").style.display = "none";
+        showToast(`✅ Submitted as ${nickname}!`);
+        loadLeaderboard();
+      } catch (err) {
+        alert("Error submitting. Is the server running?\n" + err.message);
+      }
+    });
+
+    // ── NICKNAME GENERATOR ─────────────────────────────────
+    function generateNick() {
+      const adj = ["Dusty","Cozy","Chaos","Dark","Neon","Soggy","Bare","Fancy","Rustic","Gloom"];
+      const noun = ["Couch","Lamp","Rug","Desk","Shelf","Corner","Cave","Den","Pad","Loft"];
+      return adj[Math.random()*adj.length|0] + noun[Math.random()*noun.length|0] + (Math.random()*99+1|0);
+    }
+
+    // ── LEADERBOARD ────────────────────────────────────────
+    async function loadLeaderboard() {
+      const el = document.getElementById("leaderboard");
+      el.innerHTML = '<li style="color:var(--muted);padding:1rem;text-align:center;">Loading...</li>';
+      try {
+        const res = await fetch(`${SERVER}/leaderboard`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        lbData = await res.json();
+        lbPage = 0;
+        renderLB();
+      } catch (err) {
+        el.innerHTML = `<li style="color:var(--red);padding:1rem;">Error: ${err.message}</li>`;
+      }
+    }
+
+    function renderLB() {
+      const el = document.getElementById("leaderboard");
+      const start = lbPage * PAGE_SIZE;
+      const slice = lbData.slice(start, start + PAGE_SIZE);
+
+      if (!slice.length) {
+        el.innerHTML = '<li style="color:var(--muted);padding:1rem;text-align:center;">No entries yet — be first! 🎉</li>';
+        return;
+      }
+
+      const rankClass = (i) => i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "";
+
+      el.innerHTML = slice.map((entry, i) => {
+        const globalRank = start + i;
+        const nick = entry.nickname || "Anonymous";
+        const thumb = entry.image
+          ? `<div class="lb-thumb"><img src="${entry.image}" alt="room" /></div>`
+          : `<div class="lb-thumb">🏠</div>`;
+        return `<li class="lb-entry" data-idx="${globalRank}" title="Click to view">
+          <span class="lb-rank ${rankClass(globalRank)}">#${globalRank + 1}</span>
+          ${thumb}
+          <div class="lb-info">
+            <div class="lb-name">${escHtml(nick)}</div>
+            <div class="lb-snippet">${escHtml(entry.roast || "No roast")}</div>
+          </div>
+          <span class="lb-score-badge">${entry.score}</span>
+        </li>`;
+      }).join("");
+
+      // Click handlers
+      el.querySelectorAll(".lb-entry").forEach(li => {
+        li.addEventListener("click", () => openModal(lbData[+li.dataset.idx]));
+      });
+
+      document.getElementById("prevBtn").disabled = lbPage === 0;
+      document.getElementById("nextBtn").disabled = start + PAGE_SIZE >= lbData.length;
+    }
+
+    document.getElementById("prevBtn").addEventListener("click", () => { if (lbPage > 0) { lbPage--; renderLB(); } });
+    document.getElementById("nextBtn").addEventListener("click", () => { lbPage++; renderLB(); });
+    document.getElementById("refreshLeaderboard").addEventListener("click", loadLeaderboard);
+
+    // ── MODAL ──────────────────────────────────────────────
+    let currentModalId = null;
+
+    function openModal(entry) {
+      currentModalId = entry.id || null;
+      document.getElementById("modalImg").src = entry.image || "";
+      document.getElementById("modalImg").style.display = entry.image ? "block" : "none";
+      document.getElementById("modalNick").textContent = entry.nickname || "Anonymous";
+      document.getElementById("modalScore").textContent = entry.score;
+      document.getElementById("modalRoast").textContent = entry.roast || "—";
+      document.getElementById("modalTip").textContent = entry.tip || "—";
+      document.getElementById("flagBtn").textContent = "🚩 Report image";
+      document.getElementById("flagBtn").disabled = false;
+      document.getElementById("modal-overlay").classList.add("open");
+    }
+
+    document.getElementById("modalClose").addEventListener("click", () => {
+      document.getElementById("modal-overlay").classList.remove("open");
+    });
+    document.getElementById("modal-overlay").addEventListener("click", (e) => {
+      if (e.target === document.getElementById("modal-overlay"))
+        document.getElementById("modal-overlay").classList.remove("open");
+    });
+    document.getElementById("flagBtn").addEventListener("click", async () => {
+      if (!currentModalId) return;
+      const btn = document.getElementById("flagBtn");
+      btn.disabled = true;
+      btn.textContent = "Reporting...";
+      try {
+        const res = await fetch(`${SERVER}/report`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: currentModalId, reason: "User reported" })
+        });
+        if (!res.ok) throw new Error();
+        showToast("🚩 Reported — thanks for keeping it clean!");
+        document.getElementById("modal-overlay").classList.remove("open");
+      } catch {
+        btn.disabled = false;
+        btn.textContent = "🚩 Report image";
+        showToast("❌ Report failed, try again.");
+      }
+    });
+
+    function escHtml(str) {
+      return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    loadLeaderboard();
+  </script>
+</body>
+</html>
