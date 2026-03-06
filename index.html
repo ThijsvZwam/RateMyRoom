@@ -445,7 +445,7 @@
   <div id="toast">👋 Message here</div>
 
   <script>
-    const SERVER = "https://ratemyroom-production.up.railway.app";
+    const SERVER = "http://localhost:3000";
     let currentScore = null, currentRoast = "", currentTip = "", currentImage = null;
     let lbData = [], lbPage = 0;
     const PAGE_SIZE = 5;
@@ -468,10 +468,24 @@
       if (!file) return;
       const reader = new FileReader();
       reader.onload = (ev) => {
-        currentImage = ev.target.result; // base64
-        preview.src = currentImage;
-        preview.style.display = "block";
-        rateBtn.disabled = false;
+        const img = new Image();
+        img.onload = () => {
+          // Resize to max 1024px and compress to ~500kb
+          const MAX = 1024;
+          let w = img.width, h = img.height;
+          if (w > MAX || h > MAX) {
+            if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+            else       { w = Math.round(w * MAX / h); h = MAX; }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+          currentImage = canvas.toDataURL("image/jpeg", 0.82);
+          preview.src = currentImage;
+          preview.style.display = "block";
+          rateBtn.disabled = false;
+        };
+        img.src = ev.target.result;
       };
       reader.readAsDataURL(file);
     });
