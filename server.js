@@ -91,6 +91,56 @@ function extractJSON(text) {
   return JSON.parse(match[0]);
 }
 
+// Free vision models to try in order if one is rate-limited
+const VISION_MODELS = [
+  "google/gemma-3-12b-it:free",
+  "google/gemma-3-27b-it:free",
+  "meta-llama/llama-3.2-11b-vision-instruct:free",
+  "mistralai/mistral-small-3.1-24b-instruct:free",
+  "qwen/qwen2.5-vl-3b-instruct:free",
+];
+
+async function rateWithFallback(imageBase64, mediaType) {
+  const prompt = `You are a brutally honest but funny interior design critic for RateMyRoom.
+Respond ONLY with valid JSON, no markdown, no code fences:
+{"score":<number>,"roast":"<text>","tip":"<text>"}
+
+SCORING: 0-10 with 3-5 decimal places (e.g. 4.74391). Be extremely harsh.
+Most rooms: 2-5. Nice rooms: 6-7. Impressive rooms: 8. Magazine-worthy: 9+. 10 is near impossible.
+roast: cutting funny 1-2 sentences referencing specific visible details.
+tip: one useful improvement in 1 sentence.`;
+
+  for (const model of VISION_MODELS) {
+    try {
+      console.log(`Trying model: ${model}`);
+      const result = await openRouterRequest({
+        model,
+        messages: [{ role: "user", content: [
+          { type: "image_url", image_url: { url: `data:${mediaType};base64,${imageBase64}` } },
+          { type: "text", text: prompt }
+        ]}],
+        max_tokens: 500,
+        temperature: 1.0
+      });
+
+      if (result.status === 429 || result.body?.error?.code === 429) {
+        console.log(`Model ${model} rate limited, trying next...`);
+        continue;
+      }
+      if (result.status !== 200) {
+        console.log(`Model ${model} failed with ${result.status}, trying next...`);
+        continue;
+      }
+
+      const text = result.body.choices?.[0]?.message?.content || "";
+      return extractJSON(text);
+    } catch (e) {
+      console.log(`Model ${model} threw error: ${e.message}, trying next...`);
+    }
+  }
+  throw new Error("All models failed or are rate limited");
+}
+
 // ── POST /rate ────────────────────────────────────────────
 app.post("/rate", async (req, res) => {
   const { imageBase64, mediaType } = req.body;
@@ -98,36 +148,11 @@ app.post("/rate", async (req, res) => {
     return res.status(400).json({ error: "imageBase64 and mediaType are required" });
 
   try {
-    const result = await openRouterRequest({
-      model: "google/gemma-3-27b-it:free",
-      messages: [{
-        role: "user",
-        content: [
-          { type: "image_url", image_url: { url: `data:${mediaType};base64,${imageBase64}` } },
-          { type: "text", text: `You are a brutally honest but funny interior design critic for RateMyRoom.
-Respond ONLY with valid JSON, no markdown, no code fences:
-{"score":<number>,"roast":"<text>","tip":"<text>"}
-
-SCORING: 0-10 with 3-5 decimal places (e.g. 4.74391). Be extremely harsh.
-Most rooms: 2-5. Nice rooms: 6-7. Impressive rooms: 8. Magazine-worthy: 9+. 10 is near impossible.
-roast: cutting funny 1-2 sentences referencing specific visible details.
-tip: one useful improvement in 1 sentence.` }
-        ]
-      }],
-      max_tokens: 500,
-      temperature: 1.0
-    });
-
-    if (result.status !== 200) {
-      console.error("OpenRouter error:", result.body);
-      return res.status(502).json({ error: result.body.error?.message || "API error" });
-    }
-
-    const text = result.body.choices?.[0]?.message?.content || "";
-    res.json(extractJSON(text));
+    const parsed = await rateWithFallback(imageBase64, mediaType);
+    res.json(parsed);
   } catch (e) {
     console.error("Rate error:", e);
-    res.status(502).json({ error: "Failed to get rating" });
+    res.status(502).json({ error: "All AI models are currently busy, try again in a moment" });
   }
 });
 
