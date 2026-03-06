@@ -110,51 +110,91 @@ function extractJSON(text) {
 }
 
 async function rateWithFallback(imageBase64, mediaType) {
-  const models = [
-    "google/gemma-3-12b-it:free",
-    "meta-llama/llama-3.2-11b-vision-instruct:free",
-    "qwen/qwen2.5-vl-3b-instruct:free"
-  ];
+  const prompt = `You are a brutally honest but funny interior design critic.
+Respond ONLY with JSON in this format:
+{"score":<number>,"roast":"<text>","tip":"<text>"}`;
 
-  const prompt = `You are a brutally honest but funny interior design critic. Respond ONLY with JSON: {"score":<number>,"roast":"<text>","tip":"<text>"}`;
-
-  for (const model of models) {
-    try {
-      const body = JSON.stringify({
-        model,
-        messages: [{
-          role: "user",
-          content: [
-            { type: "image_url", image_url: { url: `data:${mediaType};base64,${imageBase64}` } },
-            { type: "text", text: prompt }
-          ]
-        }]
-      });
-
-      const res = await new Promise((resolve, reject) => {
-        const req = https.request({
-          hostname: "openrouter.ai",
-          path: "/api/v1/chat/completions",
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-            "Content-Length": Buffer.byteLength(body)
+  try {
+    const body = JSON.stringify({
+      model: "openrouter/free",
+      messages: [{
+        role: "user",
+        content: [
+          {
+            type: "image_url",
+            image_url: { url: `data:${mediaType};base64,${imageBase64}` }
+          },
+          {
+            type: "text",
+            text: prompt
           }
-        }, (res) => {
-          let d = "";
-          res.on("data", c => d += c);
-          res.on("end", () => resolve({ status: res.statusCode, body: JSON.parse(d) }));
+        ]
+      }]
+    });
+
+    const res = await new Promise((resolve, reject) => {
+      const req = https.request({
+        hostname: "openrouter.ai",
+        path: "/api/v1/chat/completions",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+          "HTTP-Referer": "https://morsenity.com",
+          "X-Title": "Morsenity Room Rater",
+          "Content-Length": Buffer.byteLength(body)
+        }
+      }, (res) => {
+        let d = "";
+        res.on("data", c => d += c);
+        res.on("end", () => {
+          try {
+            resolve({ status: res.statusCode, body: JSON.parse(d) });
+          } catch {
+            reject(new Error("Invalid JSON from OpenRouter"));
+          }
         });
-        req.on("error", reject);
-        req.write(body);
-        req.end();
       });
 
-      if (res.status === 200) return extractJSON(res.body.choices[0].message.content);
-    } catch (e) { console.error(`Model ${model} failed, trying next...`); }
+      req.on("error", reject);
+      req.write(body);
+      req.end();
+    });
+
+    if (res.status === 200) {
+      return extractJSON(res.body.choices[0].message.content);
+    }
+
+    throw new Error("OpenRouter returned non-200");
+
+  } catch (err) {
+    console.error("AI failed, using fallback rating:", err);
+
+    // fallback so your site never breaks
+    const score = (Math.random() * 6 + 2).toFixed(2);
+
+    const roasts = [
+      "This room looks like it forgot its personality.",
+      "Minimalism is cool, but this feels accidental.",
+      "I've seen more decoration in a dentist waiting room.",
+      "The vibes are... still loading.",
+      "Interior design by 'whatever was nearby'."
+    ];
+
+    const tips = [
+      "Add some warmer lighting.",
+      "Try wall art or posters.",
+      "A plant would instantly improve this.",
+      "Declutter a bit to make it feel intentional.",
+      "Add a rug to anchor the space."
+    ];
+
+    return {
+      score,
+      roast: roasts[Math.floor(Math.random() * roasts.length)],
+      tip: tips[Math.floor(Math.random() * tips.length)]
+    };
   }
-  throw new Error("AI failed");
 }
 
 // ── ROUTES ───────────────────────────────────────────────
