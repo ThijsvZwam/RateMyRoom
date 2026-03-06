@@ -99,7 +99,7 @@ app.post("/rate", async (req, res) => {
 
   try {
     const result = await openRouterRequest({
-      model: "google/gemma-3-12b-it:free",
+      model: "google/gemma-3-27b-it:free",
       messages: [{
         role: "user",
         content: [
