@@ -304,18 +304,25 @@
       return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     }
 
-    async function fetchData() {
-      document.getElementById("leaderboard").innerHTML = '<li style="color:var(--muted);padding:1rem;text-align:center;">Loading...</li>';
-      try {
-        const res = await fetch(`${SERVER}/leaderboard`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        allData = await res.json();
-        updateStats();
-        applySort();
-      } catch(err) {
-        document.getElementById("leaderboard").innerHTML = `<li style="color:var(--red);padding:1rem;">Error: ${err.message}</li>`;
-      }
-    }
+async function fetchData() {
+  const el = document.getElementById("leaderboard");
+  el.innerHTML = '<li style="color:var(--muted);padding:1rem;text-align:center;">Loading...</li>';
+  
+  try {
+    // We voegen de query parameter toe voor de server-side sortering (optioneel, maar sneller)
+    const res = await fetch(`${SERVER}/leaderboard?sort=${currentSort}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    
+    allData = await res.json();
+    updateStats();
+    
+    // Omdat de server al gesorteerde data stuurt, 
+    // hoef je applySort() alleen nog te gebruiken voor de UI-afhandeling
+    applySort(); 
+  } catch(err) {
+    el.innerHTML = `<li style="color:var(--red);padding:1rem;">Error: ${err.message}</li>`;
+  }
+}
 
     function updateStats() {
       document.getElementById("statTotal").textContent = allData.length;
