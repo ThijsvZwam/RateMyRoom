@@ -98,6 +98,7 @@ const VISION_MODELS = [
   "meta-llama/llama-3.2-11b-vision-instruct:free",
   "mistralai/mistral-small-3.1-24b-instruct:free",
   "qwen/qwen2.5-vl-3b-instruct:free",
+  "openrouter/free"
 ];
 
 async function rateWithFallback(imageBase64, mediaType) {
