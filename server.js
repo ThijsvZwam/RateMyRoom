@@ -162,7 +162,25 @@ Respond ONLY with JSON in this format:
     });
 
     if (res.status === 200) {
-      return extractJSON(res.body.choices[0].message.content);
+      const parsed = extractJSON(res.body.choices[0].message.content);
+
+      // --- HARD SCORING LOGIC ---
+      let rawScore = parseFloat(parsed.score);
+      if (isNaN(rawScore)) rawScore = 5.0;
+      rawScore = Math.max(0, Math.min(10, rawScore));
+
+      const t = rawScore / 10;
+      const curved = Math.pow(t, 1.7) * 10;
+
+      const decimals = 3 + Math.floor(Math.random() * 3); // 3–5 decimals
+      const displayScore = parseFloat(curved.toFixed(decimals));
+      // --- END HARD SCORING LOGIC ---
+
+      return {
+        score: displayScore,
+        roast: parsed.roast,
+        tip: parsed.tip
+      };
     }
 
     throw new Error("OpenRouter returned non-200");
@@ -170,8 +188,11 @@ Respond ONLY with JSON in this format:
   } catch (err) {
     console.error("AI failed, using fallback rating:", err);
 
-    // fallback so your site never breaks
-    const score = (Math.random() * 6 + 2).toFixed(2);
+    // Fallback score with same curve
+    let fallbackScore = parseFloat((Math.random() * 6 + 2).toFixed(2));
+    fallbackScore = Math.pow(fallbackScore / 10, 1.7) * 10;
+    const decimals = 3 + Math.floor(Math.random() * 3);
+    fallbackScore = parseFloat(fallbackScore.toFixed(decimals));
 
     const roasts = [
       "This room looks like it forgot its personality.",
@@ -190,7 +211,7 @@ Respond ONLY with JSON in this format:
     ];
 
     return {
-      score,
+      score: fallbackScore,
       roast: roasts[Math.floor(Math.random() * roasts.length)],
       tip: tips[Math.floor(Math.random() * tips.length)]
     };
