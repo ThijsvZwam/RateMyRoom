@@ -110,112 +110,52 @@ function extractJSON(text) {
 }
 
 async function rateWithFallback(imageBase64, mediaType) {
-  const prompt = `You are a brutally honest but funny interior design critic.
-Respond ONLY with JSON in this format:
-{"score":<number>,"roast":"<text>","tip":"<text>"}`;
+  const models = [
+    "google/gemma-3-12b-it:free",
+    "meta-llama/llama-3.2-11b-vision-instruct:free",
+    "qwen/qwen2.5-vl-3b-instruct:free",
+    "openrouter/free"
+  ];
 
-  try {
-    const body = JSON.stringify({
-      model: "openrouter/free",
-      messages: [{
-        role: "user",
-        content: [
-          {
-            type: "image_url",
-            image_url: { url: `data:${mediaType};base64,${imageBase64}` }
-          },
-          {
-            type: "text",
-            text: prompt
-          }
-        ]
-      }]
-    });
+  const prompt = `You are a brutally honest but funny interior design critic. Respond ONLY with JSON: {"score":<number>,"roast":"<text>","tip":"<text>"}`;
 
-    const res = await new Promise((resolve, reject) => {
-      const req = https.request({
-        hostname: "openrouter.ai",
-        path: "/api/v1/chat/completions",
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-          "HTTP-Referer": "https://morsenity.com",
-          "X-Title": "Morsenity Room Rater",
-          "Content-Length": Buffer.byteLength(body)
-        }
-      }, (res) => {
-        let d = "";
-        res.on("data", c => d += c);
-        res.on("end", () => {
-          try {
-            resolve({ status: res.statusCode, body: JSON.parse(d) });
-          } catch {
-            reject(new Error("Invalid JSON from OpenRouter"));
-          }
-        });
+  for (const model of models) {
+    try {
+      const body = JSON.stringify({
+        model,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image_url", image_url: { url: `data:${mediaType};base64,${imageBase64}` } },
+            { type: "text", text: prompt }
+          ]
+        }]
       });
 
-      req.on("error", reject);
-      req.write(body);
-      req.end();
-    });
+      const res = await new Promise((resolve, reject) => {
+        const req = https.request({
+          hostname: "openrouter.ai",
+          path: "/api/v1/chat/completions",
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+            "Content-Length": Buffer.byteLength(body)
+          }
+        }, (res) => {
+          let d = "";
+          res.on("data", c => d += c);
+          res.on("end", () => resolve({ status: res.statusCode, body: JSON.parse(d) }));
+        });
+        req.on("error", reject);
+        req.write(body);
+        req.end();
+      });
 
-    if (res.status === 200) {
-      const parsed = extractJSON(res.body.choices[0].message.content);
-
-      // --- HARD SCORING LOGIC ---
-      let rawScore = parseFloat(parsed.score);
-      if (isNaN(rawScore)) rawScore = 5.0;
-      rawScore = Math.max(0, Math.min(10, rawScore));
-
-      const t = rawScore / 10;
-      const curved = Math.pow(t, 1.7) * 10;
-
-      const decimals = 3 + Math.floor(Math.random() * 3); // 3–5 decimals
-      const displayScore = parseFloat(curved.toFixed(decimals));
-      // --- END HARD SCORING LOGIC ---
-
-      return {
-        score: displayScore,
-        roast: parsed.roast,
-        tip: parsed.tip
-      };
-    }
-
-    throw new Error("OpenRouter returned non-200");
-
-  } catch (err) {
-    console.error("AI failed, using fallback rating:", err);
-
-    // Fallback score with same curve
-    let fallbackScore = parseFloat((Math.random() * 6 + 2).toFixed(2));
-    fallbackScore = Math.pow(fallbackScore / 10, 1.7) * 10;
-    const decimals = 3 + Math.floor(Math.random() * 3);
-    fallbackScore = parseFloat(fallbackScore.toFixed(decimals));
-
-    const roasts = [
-      "This room looks like it forgot its personality.",
-      "Minimalism is cool, but this feels accidental.",
-      "I've seen more decoration in a dentist waiting room.",
-      "The vibes are... still loading.",
-      "Interior design by 'whatever was nearby'."
-    ];
-
-    const tips = [
-      "Add some warmer lighting.",
-      "Try wall art or posters.",
-      "A plant would instantly improve this.",
-      "Declutter a bit to make it feel intentional.",
-      "Add a rug to anchor the space."
-    ];
-
-    return {
-      score: fallbackScore,
-      roast: roasts[Math.floor(Math.random() * roasts.length)],
-      tip: tips[Math.floor(Math.random() * tips.length)]
-    };
+      if (res.status === 200) return extractJSON(res.body.choices[0].message.content);
+    } catch (e) { console.error(`Model ${model} failed, trying next...`); }
   }
+  throw new Error("AI failed");
 }
 
 // ── ROUTES ───────────────────────────────────────────────
