@@ -518,7 +518,7 @@
         // This compresses scores downward — a "7" from Claude becomes ~2.86, a "9" becomes ~5.64
         // making high scores feel genuinely earned
         const t = rawScore / 10;
-        const curved = (1 - Math.sqrt(1 - t * t)) * 10;
+        const curved = Math.pow(t, 1.7) * 10;
 
         // Trim to 3–5 decimal places (no more, no less)
         const decimals = 3 + Math.floor(Math.random() * 3); // 3, 4, or 5
