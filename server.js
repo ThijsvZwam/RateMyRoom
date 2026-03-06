@@ -327,6 +327,9 @@ app.post("/admin/review-report", adminAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── HEALTH CHECK ─────────────────────────────────────────
+app.get("/", (req, res) => res.send("OK"));
+
 // ── START ─────────────────────────────────────────────────
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
