@@ -10,8 +10,12 @@ const port = process.env.PORT || 3000;
 // ── CONFIG ────────────────────────────────────────────────
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const ADMIN_PASSWORD     = process.env.ADMIN_PASSWORD;
-const SCORE_SECRET       = process.env.SCORE_SECRET || crypto.randomBytes(32).toString("hex");
-const profanityFilter    = new Filter();
+const SCORE_SECRET = process.env.SCORE_SECRET || crypto.randomBytes(32).toString("hex");
+const BAD_WORDS = ["fuck","shit","ass","bitch","bastard","cunt","dick","pussy","cock","whore","slut","nigger","nigga","faggot","retard","rape","kys","kill yourself"];
+function hasProfanity(str) {
+  const lower = str.toLowerCase();
+  return BAD_WORDS.some(w => lower.includes(w));
+}
 // Secret used to sign rating tokens — set this in your env variables
 const TOKEN_SECRET       = process.env.TOKEN_SECRET || crypto.randomBytes(32).toString("hex");
 
