@@ -578,7 +578,7 @@
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         document.getElementById("submitScoreBtn").style.display = "none";
         showToast(`✅ Submitted as ${nickname}!`);
-        loadLeaderboard();
+        localStorage.removeItem(LB_CACHE_KEY); loadLeaderboard(true);
       } catch (err) {
         alert("Error submitting. Is the server running?\n" + err.message);
       }
@@ -592,13 +592,32 @@
     }
 
     // ── LEADERBOARD ────────────────────────────────────────
-    async function loadLeaderboard() {
+    const LB_CACHE_KEY = "rmr_leaderboard_cache";
+    const LB_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+
+    async function loadLeaderboard(force = false) {
       const el = document.getElementById("leaderboard");
+
+      // Use cache if fresh and not forcing a refresh
+      if (!force) {
+        try {
+          const cached = JSON.parse(localStorage.getItem(LB_CACHE_KEY) || "null");
+          if (cached && Date.now() - cached.ts < LB_CACHE_TTL) {
+            lbData = cached.data;
+            lbPage = 0;
+            renderLB();
+            return;
+          }
+        } catch (e) {}
+      }
+
       el.innerHTML = '<li style="color:var(--muted);padding:1rem;text-align:center;">Loading...</li>';
       try {
         const res = await fetch(`${SERVER}/leaderboard`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         lbData = await res.json();
+        // Save to cache
+        localStorage.setItem(LB_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: lbData }));
         lbPage = 0;
         renderLB();
       } catch (err) {
@@ -646,7 +665,7 @@
 
     document.getElementById("prevBtn").addEventListener("click", () => { if (lbPage > 0) { lbPage--; renderLB(); } });
     document.getElementById("nextBtn").addEventListener("click", () => { lbPage++; renderLB(); });
-    document.getElementById("refreshLeaderboard").addEventListener("click", loadLeaderboard);
+    document.getElementById("refreshLeaderboard").addEventListener("click", () => loadLeaderboard(true));
 
     // ── MODAL ──────────────────────────────────────────────
     let currentModalId = null;

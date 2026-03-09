@@ -304,21 +304,33 @@
       return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     }
 
-async function fetchData() {
+const LB_CACHE_KEY = "rmr_leaderboard_cache";
+const LB_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+
+async function fetchData(force = false) {
   const el = document.getElementById("leaderboard");
+
+  // Use cache if fresh and not forcing
+  if (!force) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(LB_CACHE_KEY) || "null");
+      if (cached && Date.now() - cached.ts < LB_CACHE_TTL) {
+        allData = cached.data;
+        updateStats();
+        applySort();
+        return;
+      }
+    } catch (e) {}
+  }
+
   el.innerHTML = '<li style="color:var(--muted);padding:1rem;text-align:center;">Loading...</li>';
-  
   try {
-    // We voegen de query parameter toe voor de server-side sortering (optioneel, maar sneller)
     const res = await fetch(`${SERVER}/leaderboard?sort=${currentSort}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    
     allData = await res.json();
+    localStorage.setItem(LB_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: allData }));
     updateStats();
-    
-    // Omdat de server al gesorteerde data stuurt, 
-    // hoef je applySort() alleen nog te gebruiken voor de UI-afhandeling
-    applySort(); 
+    applySort();
   } catch(err) {
     el.innerHTML = `<li style="color:var(--red);padding:1rem;">Error: ${err.message}</li>`;
   }
