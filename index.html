@@ -379,6 +379,10 @@
     <button id="rateBtn" class="btn btn-primary" disabled>
       ⚡ Rate My Room
     </button>
+    <div id="rate-limit-msg" style="display:none;margin-top:0.75rem;background:#1a0f0f;border:1px solid #3d1a1a;border-radius:12px;padding:0.9rem 1.2rem;text-align:center;max-width:480px;margin-left:auto;margin-right:auto;">
+      <div style="font-size:1rem;font-weight:700;color:#ff4d4d;margin-bottom:0.3rem;">⏱ You've used your 3 free ratings</div>
+      <div style="font-size:0.85rem;color:#aaa;line-height:1.5;">Your limit resets in <strong style="color:#ffb347;" id="reset-timer">10 minutes</strong>. Come back then to rate more rooms!</div>
+    </div>
 
     <div id="result">
       <div class="score-display" id="score">—</div>
@@ -448,7 +452,7 @@
 
   <script>
     const SERVER = "https://ratemyroom.onrender.com";
-    let currentScore = null, currentRoast = "", currentTip = "", currentImage = null, currentScoreToken = null;
+    let currentScore = null, currentRoast = "", currentTip = "", currentImage = null;
     let lbData = [], lbPage = 0;
     const PAGE_SIZE = 5;
 
@@ -509,6 +513,7 @@
         });
 
         const parsed = await response.json();
+        if (response.status === 429) throw new Error(parsed.error || "Too many requests");
         if (parsed.error) throw new Error(parsed.error);
 
         // Parse Claude's raw score
@@ -529,7 +534,6 @@
         currentScore = parseFloat(displayScore);
         currentRoast = parsed.roast;
         currentTip = parsed.tip;
-        currentScoreToken = parsed.scoreToken || null;
 
         document.getElementById("score").textContent = displayScore;
         document.getElementById("roast").textContent = parsed.roast;
@@ -538,10 +542,19 @@
         document.getElementById("submitScoreBtn").style.display = "flex";
       } catch (err) {
         console.error(err);
-        showToast("❌ Rating failed — check the console");
+        if (err.message && err.message.toLowerCase().includes("too many")) {
+          rateBtn.disabled = true;
+          rateBtn.innerHTML = "🚫 Limit reached (3/3)";
+          document.getElementById("rate-limit-msg").style.display = "block";
+          startRateLimitCountdown();
+        } else {
+          showToast("❌ Rating failed — try again");
+        }
       } finally {
-        rateBtn.disabled = false;
-        rateBtn.innerHTML = "⚡ Rate My Room";
+        if (!rateBtn.innerHTML.includes("Limit")) {
+          rateBtn.disabled = false;
+          rateBtn.innerHTML = "⚡ Rate My Room";
+        }
       }
     });
 
@@ -555,11 +568,10 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             score: currentScore,
-            scoreToken: currentScoreToken,
             roast: currentRoast,
             tip: currentTip,
             nickname,
-            image: currentImage,
+            image: currentImage,  // base64 — store on server or omit if too heavy
             timestamp: Date.now()
           })
         });
@@ -685,6 +697,48 @@
     }
 
     loadLeaderboard();
+
+    // ── RATE LIMIT COUNTDOWN ───────────────────────────────
+    let rateLimitExpiry = null;
+    function startRateLimitCountdown() {
+      rateLimitExpiry = Date.now() + 10 * 60 * 1000; // 10 min window
+      localStorage.setItem("rmr_rate_limit", rateLimitExpiry);
+      updateCountdown();
+    }
+    function updateCountdown() {
+      if (!rateLimitExpiry) return;
+      const remaining = rateLimitExpiry - Date.now();
+      if (remaining <= 0) {
+        document.getElementById("rate-limit-msg").style.display = "none";
+        document.getElementById("rateBtn").disabled = false;
+        document.getElementById("rateBtn").innerHTML = "⚡ Rate My Room";
+        rateLimitExpiry = null;
+        localStorage.removeItem("rmr_rate_limit");
+        return;
+      }
+      const mins = Math.floor(remaining / 60000);
+      const secs = Math.floor((remaining % 60000) / 1000);
+      const el = document.getElementById("reset-timer");
+      if (el) el.textContent = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+      setTimeout(updateCountdown, 1000);
+    }
+    // Check if already rate limited from a previous session
+    const savedExpiry = localStorage.getItem("rmr_rate_limit");
+    if (savedExpiry && Date.now() < parseInt(savedExpiry)) {
+      rateLimitExpiry = parseInt(savedExpiry);
+      document.getElementById("rate-limit-msg").style.display = "block";
+      document.getElementById("rateBtn").disabled = true;
+      document.getElementById("rateBtn").innerHTML = "🚫 Limit reached (3/3)";
+      updateCountdown();
+    }
+
   </script>
+
+  <footer style="text-align:center;padding:2rem 1rem;color:#555;font-size:0.78rem;font-family:'DM Sans',sans-serif;">
+    <a href="privacy.html" style="color:#555;text-decoration:none;margin:0 0.75rem;" onmouseover="this.style.color='#ff4d00'" onmouseout="this.style.color='#555'">Privacy Policy</a>
+    ·
+    <a href="terms.html" style="color:#555;text-decoration:none;margin:0 0.75rem;" onmouseover="this.style.color='#ff4d00'" onmouseout="this.style.color='#555'">Terms of Service</a>
+    <br><span style="margin-top:0.4rem;display:block;">© 2026 RateMyRoom · morsenity.com</span>
+  </footer>
 </body>
 </html>
