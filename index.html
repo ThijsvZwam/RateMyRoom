@@ -448,7 +448,7 @@
 
   <script>
     const SERVER = "https://ratemyroom.onrender.com";
-    let currentScore = null, currentRoast = "", currentTip = "", currentImage = null;
+    let currentScore = null, currentRoast = "", currentTip = "", currentImage = null, currentScoreToken = null;
     let lbData = [], lbPage = 0;
     const PAGE_SIZE = 5;
 
@@ -529,6 +529,7 @@
         currentScore = parseFloat(displayScore);
         currentRoast = parsed.roast;
         currentTip = parsed.tip;
+        currentScoreToken = parsed.scoreToken || null;
 
         document.getElementById("score").textContent = displayScore;
         document.getElementById("roast").textContent = parsed.roast;
@@ -554,10 +555,11 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             score: currentScore,
+            scoreToken: currentScoreToken,
             roast: currentRoast,
             tip: currentTip,
             nickname,
-            image: currentImage,  // base64 — store on server or omit if too heavy
+            image: currentImage,
             timestamp: Date.now()
           })
         });
