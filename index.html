@@ -534,7 +534,7 @@
         currentScore = parseFloat(displayScore);
         currentRoast = parsed.roast;
         currentTip = parsed.tip;
-        currentScoreToken = parsed.scoreToken || null;
+        currentScoreToken = parsed._token || null;
 
         document.getElementById("score").textContent = displayScore;
         document.getElementById("roast").textContent = parsed.roast;
@@ -569,7 +569,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             score: currentScore,
-            scoreToken: currentScoreToken,
+            _token: currentScoreToken,
             roast: currentRoast,
             tip: currentTip,
             nickname,
