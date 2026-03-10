@@ -452,7 +452,7 @@
 
   <script>
     const SERVER = "https://ratemyroom.onrender.com";
-    let currentScore = null, currentRoast = "", currentTip = "", currentImage = null;
+    let currentScore = null, currentRoast = "", currentTip = "", currentImage = null, currentScoreToken = null;
     let lbData = [], lbPage = 0;
     const PAGE_SIZE = 5;
 
@@ -534,6 +534,7 @@
         currentScore = parseFloat(displayScore);
         currentRoast = parsed.roast;
         currentTip = parsed.tip;
+        currentScoreToken = parsed.scoreToken || null;
 
         document.getElementById("score").textContent = displayScore;
         document.getElementById("roast").textContent = parsed.roast;
@@ -568,14 +569,18 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             score: currentScore,
+            scoreToken: currentScoreToken,
             roast: currentRoast,
             tip: currentTip,
             nickname,
-            image: currentImage,  // base64 — store on server or omit if too heavy
+            image: currentImage,
             timestamp: Date.now()
           })
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `HTTP ${res.status}`);
+        }
         document.getElementById("submitScoreBtn").style.display = "none";
         showToast(`✅ Submitted as ${nickname}!`);
         localStorage.removeItem(LB_CACHE_KEY); loadLeaderboard(true);
@@ -614,7 +619,10 @@
       el.innerHTML = '<li style="color:var(--muted);padding:1rem;text-align:center;">Loading...</li>';
       try {
         const res = await fetch(`${SERVER}/leaderboard`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `HTTP ${res.status}`);
+        }
         lbData = await res.json();
         // Save to cache
         localStorage.setItem(LB_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: lbData }));
