@@ -534,6 +534,8 @@
           rateBtn.innerHTML = "🚫 Limit reached (3/3)";
           document.getElementById("rate-limit-msg").style.display = "block";
           startRateLimitCountdown();
+        } else if (err.message && err.message.toLowerCase().includes("not allowed")) {
+          showToast("🚫 Image rejected — please upload a room photo");
         } else {
           showToast("❌ Rating failed — try again");
         }
