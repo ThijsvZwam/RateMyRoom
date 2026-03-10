@@ -516,27 +516,13 @@
         if (response.status === 429) throw new Error(parsed.error || "Too many requests");
         if (parsed.error) throw new Error(parsed.error);
 
-        // Parse Claude's raw score
-        let rawScore = parseFloat(parsed.score);
-        if (isNaN(rawScore)) rawScore = 5.0;
-        rawScore = Math.max(0, Math.min(10, rawScore));
-
-        // Ease-in-circ curve: f(x) = 1 - sqrt(1 - (x/10)^2), mapped back to 0–10
-        // This compresses scores downward — a "7" from Claude becomes ~2.86, a "9" becomes ~5.64
-        // making high scores feel genuinely earned
-        const t = rawScore / 10;
-        const curved = Math.pow(t, 1.7) * 10;
-
-        // Trim to 3–5 decimal places (no more, no less)
-        const decimals = 3 + Math.floor(Math.random() * 3); // 3, 4, or 5
-        const displayScore = curved.toFixed(decimals);
-
-        currentScore = parseFloat(displayScore);
+        // Score is already curved and formatted by the server
+        currentScore = parsed.score;
         currentRoast = parsed.roast;
         currentTip = parsed.tip;
         currentScoreToken = parsed._token || null;
 
-        document.getElementById("score").textContent = displayScore;
+        document.getElementById("score").textContent = parsed.score;
         document.getElementById("roast").textContent = parsed.roast;
         document.getElementById("tip").textContent = parsed.tip;
         document.getElementById("result").style.display = "block";
