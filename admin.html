@@ -267,26 +267,24 @@
       <p class="section-sub">These are hidden from the public leaderboard. Restore or confirm removal.</p>
       <div id="flagged-list"><div class="empty">Loading...</div></div>
     </div>
-  </div>
-</div>
 
     <!-- IP MANAGER -->
     <div class="page" id="page-ips">
       <div class="page-title">IP Manager</div>
       <p class="section-sub">View IPs behind submissions. Ban an IP to flag all their entries at once.</p>
-      <div class="filter-bar" style="gap:0.5rem;align-items:center;">
-        <input type="text" id="ip-search" placeholder="Search IP..." style="width:200px;" />
+      <div class="filter-bar">
+        <input type="text" id="ip-search" placeholder="Search IP..." />
         <button class="filter-tag active" data-ipfilter="all">All IPs</button>
         <button class="filter-tag" data-ipfilter="multiple">Multiple entries</button>
       </div>
       <div id="ip-list"><div class="empty">Loading...</div></div>
 
-      <div style="margin-top:2rem;">
-        <div class="page-title" style="font-size:1.1rem;margin-bottom:0.5rem;">Manual Ban</div>
-        <p class="section-sub" style="margin-bottom:0.75rem;">Enter an IP to flag all their entries immediately.</p>
+      <div style="margin-top:2rem;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.5rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;margin-bottom:0.4rem;color:var(--accent2);">Manual Ban</div>
+        <p class="section-sub" style="margin-top:0;margin-bottom:0.75rem;">Enter an IP to flag all their entries immediately.</p>
         <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-          <input type="text" id="ban-ip-input" placeholder="e.g. 123.45.67.89" style="width:220px;" />
-          <button class="btn-sm btn-remove" onclick="banIP()">🚫 Ban IP</button>
+          <input type="text" id="ban-ip-input" placeholder="e.g. 123.45.67.89" style="max-width:240px;" />
+          <button class="btn-sm btn-remove" style="width:auto;padding:0.4rem 1rem;" onclick="banIP()">🚫 Ban IP</button>
         </div>
         <div id="ban-result" style="margin-top:0.5rem;font-size:0.85rem;color:var(--muted);"></div>
       </div>
